@@ -58,6 +58,8 @@ export interface OAuthConfig {
   redirectUri: string;
   /** Cookie configuration used for setting access and refresh token cookies after OAuth completion. */
   cookieConfig?: CookieConfig;
+  /** URI where user will be redirected to after logging out of the app. */
+  postLogoutRedirectUri: string;
 }
 
 /** Options controlling how to obtain and verify a JWT. */
@@ -127,6 +129,25 @@ export class ExpressJwtFusionAuth {
       this.jwks = await this.fetchJWKS();
     }
     return this.jwks;
+  }
+
+  public logout(config: OAuthConfig): express.RequestHandler {
+    return async (req: express.Request, res: express.Response, next: Function): Promise<void> => {
+      const cookieOptions: CookieOptions = {
+        domain: req.hostname,
+        ...defaultCookieConfig,
+        ...config.cookieConfig
+      };
+      res.clearCookie('access_token', cookieOptions);
+      res.clearCookie('refresh_token', cookieOptions);
+      const params = {
+        client_id: config.clientId,
+        post_logout_redirect_uri: config.postLogoutRedirectUri
+      };
+      const url = `${this.fusionAuthUrl}/oauth2/logout?${qs.stringify(params)}`;
+      debug(`Redirecting to OAuth logout: ${url}`);
+      res.redirect(url);
+    }
   }
 
   /**
