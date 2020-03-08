@@ -132,7 +132,7 @@ export class ExpressJwtFusionAuth {
   }
 
   public logout(config: OAuthConfig): express.RequestHandler {
-    return async (req: express.Request, res: express.Response, next: Function): Promise<void> => {
+    return async (req: express.Request, res: express.Response): Promise<void> => {
       const cookieOptions: CookieOptions = {
         domain: req.hostname,
         ...defaultCookieConfig,
