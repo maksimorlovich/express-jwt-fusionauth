@@ -76,6 +76,8 @@ export interface JwtOptions {
   oauthConfig?: OAuthConfig;
   /** Cookie configuration used for setting access token cookie after refresh. Uses OAuth cookie configuration by default. */
   cookieConfig?: CookieConfig;
+  /** Whether to request refresh_token from the authorize endpoint (scope = offline_acccess). Defaults to false. */
+  requestRefreshToken?: boolean;
 }
 
 /** @ignore */
@@ -88,7 +90,8 @@ const defaultCookieConfig: CookieConfig = {
 const defaultJwtOptions: JwtOptions = {
   required: true,
   alwaysLogin: false,
-  browserLogin: true
+  browserLogin: true,
+  requestRefreshToken: false
 };
 
 interface TokenResponse {
@@ -226,9 +229,10 @@ export class ExpressJwtFusionAuth {
             client_id: effectiveOptions.oauthConfig.clientId,
             redirect_uri: effectiveOptions.oauthConfig.redirectUri,
             response_type: 'code',
-            state: req.originalUrl
+            state: req.originalUrl,
+            scope: effectiveOptions.requestRefreshToken ? 'offline_access' : null
           };
-          const url = `${this.fusionAuthUrl}/oauth2/authorize?${qs.stringify(params)}`;
+          const url = `${this.fusionAuthUrl}/oauth2/authorize?${qs.stringify(params, { skipNulls: true })}`;
           debug(`Redirecting to OAuth login: ${url}`);
           res.redirect(url);
         } else {
